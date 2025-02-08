@@ -64,9 +64,16 @@ jobs:
 
       - name: Move files
         run: |
-          mv ./target/release/${{ env.RELEASE_BIN }}.so ./artifacts/plugins/
           cp ./include/* ./artifacts/qawno/include/
           cp ./include/* ./artifacts/pawno/include/
+
+      - name: Move binary (windows)
+        run: mv ./target/release/${{ env.RELEASE_BIN }}.dll ./artifacts/plugins/
+        if: matrix.os == 'windows-latest'
+
+      - name: Move binary (linux)
+        run: mv ./target/release/${{ env.RELEASE_BIN }}.so ./artifacts/plugins/
+        if: matrix.os == 'ubuntu-20.04'
 
       - uses: actions/upload-artifact@v4
         name: Upload archive
