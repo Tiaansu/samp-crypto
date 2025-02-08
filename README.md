@@ -127,9 +127,9 @@ A crypto plugin for samp in Rust.
     }
     ```
 
-    > [!IMPORTANT]   
-    > - You must call it before other crypto functions
-    > - You must set a lower value if you don't want to experience high CPU usage
+> [!IMPORTANT]   
+> - You must call it before other crypto functions
+> - You must set a lower value if you don't want to experience high CPU usage
 
 * #### crypto_get_hash(hash[], size = sizeof hash)
     **Params**   
