@@ -2,5 +2,13 @@
     "tabWidth": 4,
     "useTabs": false,
     "endOfLine": "lf",
-    "printWidth": 80
+    "printWidth": 80,
+    "overrides": [
+        {
+            "files": "*.yml",
+            "options": {
+                "tabWidth": 2
+            }
+        }
+    ]
 }

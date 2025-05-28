@@ -1,16 +1,16 @@
 name: Build
 
 on:
-  workflow_dispatch: 
+  workflow_dispatch:
   push:
-    branches: [ main ]
-    paths: 
+    branches: [main]
+    paths:
       - "**.rs"
       - "cargo.toml"
       - ".github/workflows/build.yml"
   pull_request:
-    branches: [ main ]
-    paths: 
+    branches: [main]
+    paths:
       - "**.rs"
       - "cargo.toml"
       - ".github/workflows/build.yml"
@@ -19,64 +19,66 @@ env:
   RELEASE_BIN: samp_crypto
 
 jobs:
-  build:
-    name: Build release
+  build-windows:
+    runs-on: windows-latest
+    env:
+      RUST: stable-i686
 
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        build: [linux, windows]
-        include:
-          - build: linux
-            os: ubuntu-20.04
-            rust: stable-i686
-          - build: windows
-            os: windows-latest
-            rust: stable-i686
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install gcc-multilib
-        run: |
-          sudo apt update
-          sudo apt install gcc-multilib -y
-        if: matrix.os == 'ubuntu-20.04'
-
       - name: Install Rust (rustup)
-        run: rustup update ${{ matrix.rust }} --no-self-update && rustup default ${{ matrix.rust }}
-        shell: bash
+        run: rustup update ${{ env.RUST }} --no-self-update && rustup default ${{ env.RUST }}
 
       - name: Build
         run: cargo build --release
 
-      - name: Create artifact directory
+      - name: Create artifacts directory
+        run: |
+          mkdir artifacts/plugins
+          mkdir artifacts/pawno/include
+
+      - name: Copy files to artifacts directory
+        run: |
+          cp .\target\release\${{ env.RELEASE_BIN }}.dll .\artifacts\plugins\${{ env.RELEASE_BIN }}.dll
+          cp ./include/* ./artifacts/pawno/include/
+          cp ./include/* ./artifacts/qawno/include/
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: samp-crypto-windows
+          path: artifacts/
+
+  build-linux:
+    runs-on: ubuntu-latest
+    env:
+      RUST: i686-unknown-linux-gnu
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build using Docker
         shell: bash
         run: |
-          mkdir artifacts
-          cd artifacts
-          mkdir plugins
-          mkdir -p qawno/include
-          mkdir -p pawno/include
-  
-      - name: Rename Linux binary
-        run: mv ./target/release/lib${{ env.RELEASE_BIN }}.so ./target/release/${{ env.RELEASE_BIN }}.so
-        if: matrix.os == 'ubuntu-20.04'
+          cd docker
+          chmod +x ./build.sh
+          chmod +x ./docker-entrypoint.sh
+          ./build.sh
 
-      - name: Move files
+      - name: Create artifacts directory
         run: |
-          cp ./include/* ./artifacts/qawno/include/
+          mkdir -p artifacts/plugins
+          mkdir -p artifacts/pawno/include
+          mkdir -p artifacts/qawno/include
+
+      - name: Copy files to artifacts directory
+        run: |
+          cp target/${{ env.RUST }}/release/lib${{ env.RELEASE_BIN }}.so artifacts/plugins/${{ env.RELEASE_BIN}}.so
           cp ./include/* ./artifacts/pawno/include/
+          cp ./include/* ./artifacts/qawno/include/
 
-      - name: Move binary (windows)
-        run: mv ./target/release/${{ env.RELEASE_BIN }}.dll ./artifacts/plugins/
-        if: matrix.os == 'windows-latest'
-
-      - name: Move binary (linux)
-        run: mv ./target/release/${{ env.RELEASE_BIN }}.so ./artifacts/plugins/
-        if: matrix.os == 'ubuntu-20.04'
-
-      - uses: actions/upload-artifact@v4
-        name: Upload archive
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
         with:
-          name: samp-crypto-${{ runner.os }}
+          name: samp-crypto-linux
           path: artifacts/
