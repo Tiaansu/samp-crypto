@@ -37,6 +37,7 @@ jobs:
         run: |
           mkdir artifacts/plugins
           mkdir artifacts/pawno/include
+          mkdir artifacts/qawno/include
 
       - name: Copy files to artifacts directory
         run: |
